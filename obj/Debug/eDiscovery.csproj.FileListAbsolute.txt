@@ -1,0 +1,2 @@
+C:\temp\apps\recordsearcher\wwwroot\obj\Debug\eDiscovery.csprojResolveAssemblyReference.cache
+C:\temp\apps\recordsearcher\wwwroot\obj\Debug\eDiscovery.csproj.CoreCompileInputs.cache

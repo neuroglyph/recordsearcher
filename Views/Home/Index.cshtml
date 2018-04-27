@@ -1,0 +1,212 @@
+﻿
+<div class="row">
+    <div id="left-hand-nav" class="col-md-2">
+        <form class="form-horizontal">
+            <div class="controls">
+                <div class="form-group">
+                    <label for="firstName" class="sr-only">First Name:</label>
+                    <input type="text" class="form-control input-sm" name="firstName" id="firstName" placeholder="First Name">
+                </div>
+
+                <div class="form-group">
+                    <input type="text" class="form-control input-sm" name="middleName" id="middleName" placeholder="Middle Name">
+                </div>
+                <div class="form-group">
+                    <input type="text" class="form-control input-sm" name="lastName" id="lastName" placeholder="Last Name">
+                </div>
+                <div class="form-group">
+                    <input type="date" class="form-control input-sm" name="dateOfBirth" id="dateOfBirth" placeholder="Date Of Birth">
+                </div>
+                <div class="form-group">
+                    <select class="form-control input-sm" id="gender" name="gender">
+                        <option>Gender</option>
+                        <option>Male</option>
+                        <option>Female</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button id="btnSend" class="btn btn-sm btn-primary"><span class="glyphicon glyphicon-search"></span> Search</button>
+                </div>
+            </div>
+        </form>
+            </div>
+    <div class="col-md-7">
+        <div id="infoPanel" class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title">Updates and Info</h3>
+            </div>
+            <div class="panel-body">
+                <p>
+                    07.25.2015 - Integrated Microsoft Azure SDK and published to Azure App Service - we're in the cloud, baby!
+                </p>
+                <p>
+                    07.24.2015 - Integrated SignalR library to provide real-time display of recent searches across all clients.
+                </p>
+                <p>
+                    03.15.2015 - Converted application from ASP .NET MVC 4 to Web API project. This allows for customization of response type based on client request.
+                </p>
+                <p>
+                    01.25.2015 - Initial results from NC Board of Elections website do not include gender information. In order to filter by this criteria, it will be necessary to take a second run at the data using the generated url to harvest additional information.
+                </p>
+                <p>
+                    01.25.2015 - NC Board of Election Website crawler configured to search against specified birthdate (mm/dd/yyyy)
+                </p>
+                <p>
+                    01.25.2015 - Mecklenburg County Arrest Inquiry website does not use gender as a criteria for searches. As a result, if this
+                    information is provided as part of the search, must handle filtering against the result set.
+                </p>
+                <p>
+                    01.24.2015 - Knockout model bindings re-written to accomodate searches with empty result sets returned.
+                </p>
+                <p>
+                    01.18.2015 - First "release" to public domain!
+                </p>
+            </div>
+        </div>
+
+        <div id="results-panel" class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title">Results</h3>
+            </div>
+            <div class="panel-body">
+
+                <div>
+                    <span data-bind="text: resultsFoundText()"></span>
+                </div>
+
+                <!-- ko if: results -->
+                <div>
+                    <div data-bind="foreach: results">
+
+                        <div style="margin-top: 10px">
+                            <a data-bind="attr: { href: Url }, text: Title"></a>
+                            <div data-bind="text: Description"></div>
+                            <div data-bind="text: Source"></div>
+                        </div>
+                    </div>
+                    <p></p>
+                </div>
+                <!-- /ko -->
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+
+        <div id="signalRPanel" class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title">Recent Searches</h3>
+            </div>
+            <div class="panel-body">
+                <div id="discussion"></div>
+            </div>
+        </div>
+    </div>
+</div>
+        <div id="Searching_Modal" class="modal fade" tabindex="-1" role="dialog" data-keyboard="false"
+             data-backdrop="static">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header" style="text-align: center">
+                        <h3>Searching...</h3>
+                    </div>
+                    <div class="modal-body">
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="text-align: center"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="Error_Modal" class="modal" tabindex="-1" role="dialog" data-keyboard="false"
+             data-backdrop="static">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header" style="text-align: center">
+                        <h3>Error!</h3>
+                    </div>
+                    <div id="error_msg" class="modal-body">
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+
+<script type="text/javascript">
+            var model = new ResultsViewModel();
+            ko.applyBindings(model);
+        </script>
+
+
+        <script type="text/javascript">
+
+            $(document).ready(function () {
+                $('#results-panel').hide();
+
+            });
+        </script>
+
+        <!--Add script to update the page and send messages.-->
+        <script type="text/javascript">
+            $(function () {
+                // Declare a proxy to reference the hub.
+                var discoveryHub = $.connection.discoveryHub;
+                // Create a function that the hub can call to broadcast messages.
+                discoveryHub.client.broadcastMessage = function(searchTerms, numberResults) {
+                    // Add the message to the page.
+                    $('#discussion').append('<div>' + searchTerms + '   <span class="badge">' + numberResults + '</span></div>');
+                };
+
+                // Start the connection.
+                $.connection.hub.start().done(function () {
+
+                    $('#btnSend').click(function (event) {
+                        // Call the Send method on the hub.
+
+                        event.preventDefault();
+                        $('#infoPanel').hide();
+                        $('#Searching_Modal').modal('show');
+                        $.ajax(
+                        {
+                            // use this one for localhost
+                            url: "api/Search/Get",
+                            // use this one for godaddy site
+                            // url: "eDiscovery/api/Search/GetResults",
+                            type: "GET",
+                            data: $("form").serialize(),
+                            processData: false,
+                            success: function (data) {
+                                $('#Searching_Modal').modal('hide');
+                                $('#results-panel').show();
+                                model.loadResults(data);
+                                var searchTermName = $('#firstName').val() + ' ' + $('#middleName').val() + ' ' + $('#lastName').val();
+                                discoveryHub.server.send(searchTermName, model.resultsCount());
+
+                            },
+                            error: function (xhr, status, p3, p4) {
+                                var err = '';
+                                $('#Searching_Modal').modal('hide');
+                                if (xhr.responseText && xhr.responseText[0] == "{")
+                                    err = JSON.parse(xhr.responseText).message;
+                                else {
+                                    err = xhr.status + ':' + xhr.statusText; //xhr.responseText;
+                                }
+                                $('#error_msg').html(err);
+                                $('#Error_Modal').modal('show');
+                            }
+                        });
+
+                       
+                    });
+                });
+            });
+        </script>
